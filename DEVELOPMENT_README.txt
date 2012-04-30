@@ -25,6 +25,8 @@ development following these simple instructions.
 
 5. Build a version of PHP.
    > php-build.sh 5.3.11
+
+   This also takes a while as it compiles PHP for you!
    
 6. Select PHP to use:
    > pe 5.3.11
