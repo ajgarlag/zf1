@@ -7,7 +7,9 @@ POSTFIX=
 EXTRA_FLAGS=
 
 if [ -z "$VERSION" ]; then
-    echo "oops"
+    echo "Usage: php-build.sh {VERSION}"
+    echo ""
+    echo "e.g. php-build.sh 5.2.4"
     exit;
 fi
 
@@ -62,22 +64,21 @@ OPTIONS="--with-gd --with-jpeg-dir=/usr --with-xpm-dir=/usr --with-freetype-dir=
     --with-xmlrpc --with-zlib --disable-zend-memory-manager --with-esmtp \
     --with-xsl --enable-exif --enable-soap --enable-ftp"
 
-#./configure --prefix=/usr/local/php/${VERSION}${POSTFIX} ${EXTRA_FLAGS} ${OPTIONS}
+./configure --prefix=/usr/local/php/${VERSION}${POSTFIX} ${EXTRA_FLAGS} ${OPTIONS}
 
 # Build and install
 echo "Building ${VERSION}${POSTFIX} in $PHP_DIR"
-#make -j 5
+make -j 5
 
 echo "Installing ${VERSION}${POSTFIX} in $PHP_DIR"
-#sudo make install
+sudo make install
 
 echo "Installing PHPUnit"
 export PATH=/usr/local/php/${VERSION}/bin:/usr/local/bin:/usr/bin:/bin:/vagrant/puppet/scripts
 sudo pear update-channels
+sudo pear upgrade-all
 sudo pear config-set auto_discover 1
-pear channel-discover pear.phpunit.de
-pear channel-discover pear.symfony-project.com
-#sudo pear install pear.phpunit.de/PHPUnit-3.4.15
+sudo pear install pear.phpunit.de/PHPUnit-3.4.15
 
 
 
