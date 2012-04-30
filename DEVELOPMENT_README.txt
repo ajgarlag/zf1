@@ -22,14 +22,16 @@ development following these simple instructions.
 5. Build a version of PHP.
    > php-build.sh 5.3.11
    
-5. Select PHP to use:
+6. Select PHP to use:
    > pe 5.3.11
 
-6. Run tests
+7. Run tests
    > cd /vagrant/tests
    > phpunit --stderr -d memory_limit=-1 Zend/Acl/AclTest.php
    > phpunit --stderr -d memory_limit=-1 Zend/Amf/AllTests.php
    (etc...)
+
+Note that you can repeat items 5 and 6 to create any version if PHP.
 
    
 Notes:
