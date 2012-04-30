@@ -16,6 +16,10 @@ development following these simple instructions.
 3. Start the process by running Vagrant.
    > vagrant up
 
+   This will take a long while as it has to download a VM image and then 
+   provision it. Once it has finished, it will exit and leave you back at the
+   command prompt.
+
 4. SSH into the VM
    > vagrant ssh
 
