@@ -27,7 +27,9 @@ development following these simple instructions.
 
 6. Run tests
    > cd /vagrant/tests
-   > phpunit --stderr -d memory_limit=-1 Zend/Acl/AllTests.php
+   > phpunit --stderr -d memory_limit=-1 Zend/Acl/AclTest.php
+   > phpunit --stderr -d memory_limit=-1 Zend/Amf/AllTests.php
+   (etc...)
 
    
 Notes:
