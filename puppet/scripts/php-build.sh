@@ -34,7 +34,7 @@ fi;
 # Retrieve source code 
 if [ $RESET -eq 1 ] ; then
     echo "Downloading php-${VERSION}.tar.gz"
-    wget -q http://uk3.php.net/get/php-${VERSION}.tar.gz/from/this/mirror
+    wget -O php-${VERSION}.tar.gz http://uk3.php.net/get/php-${VERSION}.tar.gz/from/this/mirror
     if [ ! -f php-${VERSION}.tar.gz ];
     then
         wget -q http://museum.php.net/php5/php-${VERSION}.tar.gz
@@ -81,5 +81,7 @@ sudo pear config-set auto_discover 1
 sudo pear install pear.phpunit.de/PHPUnit-3.4.15
 
 
-
+echo ""
+echo "PHP version ${VERSION} is now installed. Type: pe ${VERSION}"
+echo ""
 
