@@ -29,7 +29,7 @@ Vagrant::Config.run do |config|
 
   # Forward a port from the guest to the host, which allows for outside
   # computers to access the VM, whereas host only networking does not.
-  #config.vm.forward_port 80, 8081
+  config.vm.forward_port 80, 8081
 
 
   # Pass custom arguments to VBoxManage before booting VM

@@ -40,7 +40,7 @@ Note that you can repeat items 5 and 6 to create any version if PHP.
    
 Notes:
 - The VM will be running in the background as VBoxHeadless
-- HTTP and SSH ports on the VM are forwarded to localhost (22 -> 2222, 80 -> 8080)
+- HTTP and SSH ports on the VM are forwarded to localhost (22 -> 2222, 80 -> 8081)
 - The zf1-dev directory you checked out will be mounted inside the VM at /vagrant
 - You can develop by editing the files you cloned in the IDE of you choice.
 - To stop the VM do one of the following:
