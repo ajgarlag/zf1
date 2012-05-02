@@ -36,6 +36,7 @@ Vagrant::Config.run do |config|
   config.vm.customize [
     # 'modifyvm', :id, '--chipset', 'ich9', # solves kernel panic issue on some host machines
     # '--uartmode1', 'file', 'C:\\base6-console.log' # uncomment to change log location on Windows
+    "setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"
   ]
 
   # Share an additional folder to the guest VM. The first argument is
