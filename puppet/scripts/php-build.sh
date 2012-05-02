@@ -41,8 +41,7 @@ if [ $RESET -eq 1 ] ; then
     else
         wget http://museum.php.net/php5/php-${VERSION}.tar.gz
     fi
-    echo "DONE"
-    exit
+
     if [ ! -f php-${VERSION}.tar.gz ];
     then
         echo "Could not find php-${VERSION}.tar.gz"
