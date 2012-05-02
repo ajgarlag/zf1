@@ -15,6 +15,11 @@ package { 'vim':
     require => Exec["update-apt"],
 }
 
+package { 'curl':
+    ensure => latest,
+    require => Exec["update-apt"],
+}
+
 package { 'libxpm-dev':
     ensure => latest,
     require => Exec["update-apt"],

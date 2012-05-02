@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 VERSION=$1
 
@@ -34,11 +34,15 @@ fi;
 # Retrieve source code 
 if [ $RESET -eq 1 ] ; then
     echo "Downloading php-${VERSION}.tar.gz"
-    wget -O php-${VERSION}.tar.gz http://uk3.php.net/get/php-${VERSION}.tar.gz/from/this/mirror
-    if [ ! -f php-${VERSION}.tar.gz ];
-    then
-        wget -q http://museum.php.net/php5/php-${VERSION}.tar.gz
+    RESPONSE=$(curl --write-out %{http_code} --silent  --head --output /dev/null http://museum.php.net/php5/php-${VERSION}.tar.gz)
+    echo $RESPONSE
+    if [ $RESPONSE -eq 404 ]; then
+        wget -O php-${VERSION}.tar.gz http://uk3.php.net/get/php-${VERSION}.tar.gz/from/this/mirror
+    else
+        wget http://museum.php.net/php5/php-${VERSION}.tar.gz
     fi
+    echo "DONE"
+    exit
     if [ ! -f php-${VERSION}.tar.gz ];
     then
         echo "Could not find php-${VERSION}.tar.gz"
