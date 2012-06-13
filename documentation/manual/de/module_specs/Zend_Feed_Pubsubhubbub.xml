@@ -1,0 +1,673 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- EN-Revision: 20552 -->
+<!-- Reviewed: no -->
+<sect1 id="zend.feed.pubsubhubbub.introduction">
+    <title>Zend_Feed_Pubsubhubbub</title>
+
+    <para>
+        <classname>Zend_Feed_Pubsubhubbub</classname> ist eine Implementation der PubSubHubbub Core
+        0.2 Spezifikation (Working Draft). Sie bietet eine Implementation eines Pubsubhubbub
+        Publizisten und Abonnenten geeignet für den Zend Framework und andere PHP Anwendungen.
+    </para>
+
+    <sect2 id="zend.feed.pubsubhubbub.what.is.pubsubhubbub">
+        <title>Was ist Pubsubhubbub?</title>
+
+        <para>
+            Pubsubhubbub ist ein offenes, einfaches Web-skalierbares Pubsub Protokoll. Der normale
+            Anwendungsfall ist es Blogs (Publizist) zu erlauben Aktualisierungen von deren RSS oder
+            Atom Feeds (Themen) an Abonnenten zu "senden". Diese Abonenten müssen dem RSS oder Atom
+            Feed des Blogs über einen Hub abonniert haben. Das ist ein zentraler Server der
+            benachrichtigt wird wenn es Aktualisierungen des Publizisten gibt und diese anschließend
+            an alle Abonnenten verteilt. Jeder Feed kann bekanntgeben das er ein oder mehrere Hubs
+            unterstützen indem ein Atom Namespaced Linkelement mit dem Rel Attribut "hub" verwendet
+            wird.
+        </para>
+
+        <para>
+            Pubsubhubbub hat Aufmerksamkeit erlangt weil es ein Pubsub Protokoll ist das einfach zu
+            implementieren ist und über HTTP arbeitet. Seine Philosophie ist es das traditionelle
+            Modell zu ersetzen indem Blog Feeds mit einem regulären Interfall abgefragt werden um
+            Aktualisierungen zu erkennen und zu empfangen. Abhängig von der Frequenz der Abfrage
+            kann es viel Zeit in Anspruch nehmen Aktualisierungen an interessierte Menschen bei
+            Sammelstellen bis zu Desktop Lesern, bekannt zu machen. Mit der Verwendung eines
+            Pubsub Systems werden Aktualisierungen nicht einfach von Abonnenten abgefragt sondern
+            an die Abonnenten geschickt, was jegliche Verzögerung ausschaltet. Aus diesem Grund
+            fungiert Pubsubhubbub als Teil von dem was als Echt-Zeit Web bekannt ist.
+        </para>
+
+        <para>
+            Das Protokoll existiert nicht isoliert. PubSub Systems gibt es schon seit einiger Zeit,
+            wie auch das übliche Jabber Publish-Subscribe Protokoll, XEP-0060, oder das nicht so
+            bekannte rssCloud (beschrieben 2001). Trotzdem haben diese keine keine breite Anwendung
+            gefunden weil Sie entweder komplex sind, ein schlechtes Timing haben, oder nicht für
+            Web Anwendungen verwendbar sind. Bei rssCloud, welches zuletzt als Antwort auf das
+            Erscheinen von Pubsubhubbub revidiert wurde, wurde auch eine signifikante Steigerung
+            gesehen obwohl es an einer formalen Spezifikation fehlt und es aktuell keine Atom 1.0
+            Feeds unterstützt.
+        </para>
+
+        <para>
+            Warscheinlich überraschend weil es noch relativ Jung ist, ist Pubsubhubbub trotzdem
+            bereits in Verwendung unter anderem bei Google Reader, Feedburner und es sind Plugins
+            für Wordpress Blogs vorhanden.
+        </para>
+    </sect2>
+
+    <sect2 id="zend.feed.pubsubhubbub.architecture">
+        <title>Architektur</title>
+
+        <para>
+            <classname>Zend_Feed_Pubsubhubbub</classname> implementiert zwei Seiten der Pubsubhubbub
+            0.2 Spezifikation: einen Publizisten und einen Abonnenten. Es implementiert aktuell
+            keinen Hub Server. Dieser ist aber in Arbeit für ein zukünftiges Zend Framework Release.
+        </para>
+
+        <para>
+            Ein Publizist ist verantwortlich für die Mitteilung aller Aktualisierungen seines Feeds
+            an alle unterstützten Hubs (es können viele unterstützt werden um Redundanz zu einem
+            System hinzuzufügen), egal ob es sich um Atom oder RSS basierte handelt. Das wird getan
+            indem die unterstützten Hub Server mit der URL des aktualisierten Feeds gepingt werden.
+            In der Pubsubhubbub Terminologie wird jede aktualisierbare Ressource welche in der Lage
+            ist abonniert zu werden als Thema bezeichnet. Sobald ein Ping empfangen wird, frägt der
+            Hub den aktualisierten Feed ab, bearbeitet die aktualisierten Elemente, und leitet alle
+            Aktualisierungen an alle Abonnenten weiter die diesen Feed abonniert haben.
+        </para>
+
+        <para>
+            Ein Abonnent ist jedes Mitglied oder jede Anwendung welche einen oder mehrere Hubs
+            abonniert um Aktuslisierungen von einem Thema zu empfangen welches von einem Publizisten
+            gehostet wird. Der Abonnent kommuniziert niemals direkt mit dem Publizisten da der Hub
+            als Zwischenglied fungiert welches Abos akzeptiert und Aktualisierungen an Abonnenten
+            sendet. Der Abonnent kommuniziert seinerseits nur mit dem Hub um Themen entweder zu
+            abonnieren und Abos zu entfernen, oder wenn er Aktualisierungen vom Hub empfängt. Dieses
+            Design der Kommunikation ("Fat Pings") entfernt effektiverweise die Möglichkeit eines
+            "Thundering Herd" Problems. Dieses findet in einem Pubsub System statt in dem der Hub
+            Abonnenten über eine vorhandene Aktualisierung informiert, und alle Abonnenten dazu
+            auffordert den Feed sofort vom Publizisten zu empfangen, was zu einer Verkehrsspitze
+            führt. In Pubsubhubbub verteilt der Hub das aktuelle Update in einem "Fat Ping" so dass
+            der Publizist keine Verkehrsspitze aushalten muss.
+        </para>
+
+        <para>
+            <classname>Zend_Feed_Pubsubhubbub</classname> implementiert Pubsubhubbub Publizisten und
+            Abonnenten mit den Klassen <classname>Zend_Feed_Pubsubhubbub_Publisher</classname> und
+            <classname>Zend_Feed_Pubsubhubbub_Subscriber</classname>. Zusätzlich kann die
+            Implementation des Abonnenten alle Feed Aktualisierungen behandeln die von einem Hub
+            weitergeleitet werden indem
+            <classname>Zend_Feed_Pubsubhubbub_Subscriber_Callback</classname> verwendet wird. Diese
+            Klassen, deren Verwendungszweck, und die APIs werden in den weiterführenden Abschnitten
+            behandelt.
+        </para>
+    </sect2>
+
+    <sect2 id="zend.feed.pubsubhubbub.zend.feed.pubsubhubbub.publisher">
+        <title>Zend_Feed_Pubsubhubbub_Publisher</title>
+
+        <para>
+            In Pubsubhubbub ist der Publizist der Teilnehmer welcher einen lebenden Feed
+            veröffentlicht und Ihn regelmäßig mit neuem Inhalt aktualisiert. Das kann ein Blog, eine
+            Sammlung, oder sogar ein Webservice mit einer öffentlichen Feed basierenden API sein.
+            Damit diese Aktualisierungen zu den Abonnenten geschickt werden können, muss der
+            Publizist alle seine unterstützten Hubs darüber informieren das eine Aktualisierung
+            stattgefunden hat, indem eine einfache HTTP POST Anfrage verwendet wird, welche die URI
+            oder das aktualisierte Thema enthält (z.B. den aktualisierten RSS oder Atom Feed). Der
+            Hub bestätigt den Empfang der Benachrichtigung, holt den aktualisierten Feed, und leitet
+            alle Aktualisierungen an alle Abonnenten weiter welche sich bei diesem Hub für
+            Aktualisierungen für den relevanten Feed angemeldet haben.
+        </para>
+
+        <para>
+            Vom Design her bedeutet dies dass der Publizist sehr wenig zu tun hat ausser diese Hub
+            Pings jedesmal zu senden wenn sich seine Feeds ändern. Als Ergebnis hiervon ist die
+            Implementation des Publizisten extrem einfach zu verwenden und benötigt sehr wenig
+            Arbeit für die Einrichtung und Verwendung wenn Feeds aktualisiert werden.
+        </para>
+
+        <para>
+            <classname>Zend_Feed_Pubsubhubbub_Publisher</classname> implementiert einen kompletten
+            Pubsubhubbub Publizisten. Sein Setup ist sehr einfach und hauptsächlich müssen bei Ihm
+            nur die URI Endpunkte für alle Hubs konfiguriert werden welche bei Aktualisierungen
+            benachrichtigt werden müssen, und die URIs aller Themen die in Benachrichtigungen
+            einzubinden sind.
+        </para>
+
+        <para>
+            Das folgende Beispiel zeigt einen Publizisten der eine Sammlung von Hubs über
+            Aktualisierungen zu einem Paar von lokalen RSS und Atom Feeds benachrichtigt. Die Klasse
+            enthält eine Anzahl von Fehlern welche die URLs des Hubs enthalten, damit
+            Benachrichtigungen stäter wieder ausgeführt oder protokolliert werden können wenn
+            irgendeine Benachrichtigung fehlschlägt. Jedes resultierende Fehlerarray enthält auch
+            einen "response" Schlüssel welche das betreffende HTTP Antwortobjekt enthält. In Falle
+            irgendeines Fehlers wird empfohlen die Operation für den fehlgeschlagenen Hub Endpunkt
+            in Zukunft zumindest noch einmal zu versuchen. Das kann die Verwendung einer geplanten
+            Aufgabe für diesen Zweck oder einer Job Queue wenn solche extra Schritte optional sind.
+        </para>
+
+        <programlisting language="php"><![CDATA[
+$publisher = new Zend_Feed_Pubsubhubbub_Publisher;
+$publisher->addHubUrls(array(
+    'http://pubsubhubbub.appspot.com/',
+    'http://hubbub.example.com',
+));
+$publisher->addUpdatedTopicUrls(array(
+    'http://www.example.net/rss',
+    'http://www.example.net/atom',
+));
+$publisher->notifyAll();
+
+if (!$publisher->isSuccess()) {
+    // Auf Fehler prüfen
+    $errors     = $publisher->getErrors();
+    $failedHubs = array()
+    foreach ($errors as $error) {
+        $failedHubs[] = $error['hubUrl'];
+    }
+}
+
+// Benachrichtigung für fehlgeschlagene Hubs in $failedHubs nochmals planen
+]]></programlisting>
+
+        <para>
+            Wenn man eine konkretere Kontrolle über den Publizisten bevorzugt, gibt es die Methoden
+            <methodname>addHubUrls()</methodname> und <methodname>addUpdatedTopicUrls()</methodname>
+            welche jeden Arraywert an die einzelnen öffentlichen Methoden
+            <methodname>addHubUrl()</methodname> und <methodname>addUpdatedTopicUrl()</methodname>
+            übergeben. Es gibt auch passende <methodname>removeUpdatedTopicUrl()</methodname> und
+            <methodname>removeHubUrl()</methodname> Methoden.
+        </para>
+
+        <para>
+            Man kann das Setzen der Hub URIs auch überspringen und jeden in Folge benachrichtigen
+            indem die Methode <methodname>notifyHub()</methodname> verwendet wird welche die URI
+            eines Hub Endpunkts als sein einziges Argument akzeptiert.
+        </para>
+
+        <para>
+            Es gibt keine anderen Aufgaben die abzudecken sind. Die Implementation des Publizisten
+            ist sehr einfach da das meiste der Feedbearbeitung und Verteilung von den ausgewählten
+            Hubs durchgeführt wird. Es ist trotzdem wichtig Fehler zu erkennen und
+            Benachrichtigungen wieder so früh wie möglich zu planen (mit einer vernünftigen
+            maximalen Anzahl an Versuchen) um sicherzustellen das Benachrichtigungen alle
+            Abonnenten erreichen. In vielen Fällen können Hubs, als endgültige Alternative, den
+            eigenen Feed regelmäßig abfragen um zusätzliche Toleranzen bei Fehlern anzubieten
+            sowohl wegen deren eigenen temporären Downtime als auch den Fehlern und der Downtime
+            des Publizisten.
+        </para>
+    </sect2>
+
+    <sect2 id="zend.feed.pubsubhubbub.zend.feed.pubsubhubbub.subscriber">
+        <title>Zend_Feed_Pubsubhubbub_Subscriber</title>
+
+        <para>
+            In Pubsubhubbub ist der Abonnent ein Teilnehmer welcher Aktualisierungen zu irgendeinem
+            Thema (einem RSS oder Atom Feed) empfangen will. Er kann das bewerkstelligen indem er
+            einen oder mehrere Hubs abonniert welche von diesem Thema beworben werden, normalerweise
+            als ein Set von ein oder mehreren Atom 1.0 Links mit dem Rel Attribut "hub". Ab diesem
+            Punkt sendet der Hub, wenn er eine Benachrichtigung über eine Aktualisierung des
+            Publizisten empfängt, einen Atom oder RSS Feed, welcher alle Aktualisierungen enthält,
+            zur Callback URL des Abonnenten. Über diesen Weg muss der Abonnent niemals den
+            originalen Feed besuchen (obwohl es trotzdem empfohlen wird um sicherzustellen das
+            Aktualisierungen empfangen werden wenn ein Hub jemals offline geht). Alle Anfragen für
+            Abos müssen die URI des Themas enthalten welches abonniert werden soll, und eine
+            Callback URL welche der Hub verwendet um das Abo zu bestätigen und um Aktualisierungen
+            weiterzuleiten.
+        </para>
+
+        <para>
+            Der Abonnent hat deswegen zwei Rollen. Abos zu erstellen und zu managen, inklusive der
+            Abonnierung von neuen Themen mit einem Hub, dem kündigen von Abos (wenn notwendig), und
+            periodisch Abos zu erneuern da diese eine begrenzte Gültigkeit haben können was durch
+            den Hub gesetzt wird. Dies wird von
+        </para>
+
+        <para>
+            Die zweite Rolle ist es Aktualisierungen zu akzeptieren welche vom Hub zur Callback
+            URL des Abonnenten gesendet werden, wenn z.B. die URI des Abonnenten zugeordnet wurde
+            um Aktualisierungen zu behandeln. Die Callback URL behandelt auch Events wenn der Hub
+            den Abonnenten kontaktiert um alle Abos zu das Löschen von Abos zu bestätigen. Dies wird
+            behandelt indem eine Instanz von
+            <classname>Zend_Feed_Pubsubhubbub_Subscriber_Callback</classname> verwendet wird wenn
+            auf die Callback URL zugegriffen wird.
+        </para>
+
+        <important>
+            <para>
+                <classname>Zend_Feed_Pubsubhubbub_Subscriber</classname> implementiert die
+                Pubsubhubbub Spezifikation 0.2. Da dies eine Version der Spezifikation ist
+                implementieren Sie aktuell nicht alle Hubs. Die neue Spezifikation erlaubt der
+                Callback URL einen Abfragestring einzubinden welcher von dieser Klasse verwendet,
+                aber nicht von allen Hubs unterstützt wird. Im Interesse einer maximalen
+                Kompatibilität wird deshalb empfohlen die Komponente des Abfragestrings der
+                Callback URI des Abonnenten als Pfadelement darzustellen, z.B. als Parameter in der
+                Route erkannt und mit der Callback URI assoziiert und vom Router der Anwendung
+                verwendet.
+            </para>
+        </important>
+
+        <sect3 id="zend.feed.pubsubhubbub.zend.feed.pubsubhubbub.subscriber.subscribing.and.unsubscribing">
+            <title>Abonnieren und Abos löschen</title>
+
+            <para>
+                <classname>Zend_Feed_Pubsubhubbub_Subscriber</classname> implementiert einen
+                kompletten Pubsubhubbub Abonnenten der in der Lage ist jedes Thema über jeden Hub
+                der von diesem Thema vermittelt wird zu abonnieren und Abos zu löschen. Er arbeitet
+                in Verbindung mit <classname>Zend_Feed_Pubsubhubbub_Subscriber_Callback</classname>
+                welcher Anfragen von einem Hub akzeptiert um alle Aboanfragen und das Löschen von
+                Abos zu bestätigen (um Missbrauch durch andere zu verhindern).
+            </para>
+
+            <para>
+                Jedes Abo (oder Löschen eines Abos) benötigt die betreffende Information bevor
+                es bearbeitet werden kann, z.B. die URI des Themas (Atom oder RSS Feed) das für
+                Aktualisierungen abonniert werden soll, und die URI des Endpunkts für den Hub
+                welcher die Anmeldung auf das Abo bearbeitet und die Aktualisierungen weiterleitet.
+                Die Lebenszeit eines Abos kann durch den Hub ermittelt werden, aber die meisten
+                Hubs sollten die automatische Auffrischung des Abos unterstützen indem der
+                Abonnenten geprüft wird. Das wird von
+                <classname>Zend_Feed_Pubsubhubbub_Subscriber_Callback</classname> unterstützt und
+                benötigt keine weitere Arbeit. Es wird trotzdem empfohlen dass man die vom Hub
+                kommende Lebenszeit des Abos (time to live, ttl) verwendet um die Erstellung neuer
+                Abos zu planen (der Prozess ist identisch mit dem eines neuen Abos) um es beim Hub
+                zu aktualisieren. Wärend das per se nicht notwendig ist, deckt es Fälle ab in denen
+                ein Hub die automatische Aktualisierung des Abos nicht unterstützt und deckt damit
+                Fehler des Hubs mit zusätzlicher Redundanz ab.
+            </para>
+
+            <para>
+                Mit der relevanten Information an der Hand kann eine Abonnierung wie anbei gezeigt
+                versucht werden:
+            </para>
+
+            <programlisting language="php"><![CDATA[
+    $storage = new Zend_Feed_Pubsubhubbub_Model_Subscription;
+
+    $subscriber = new Zend_Feed_Pubsubhubbub_Subscriber;
+    $subscriber->setStorage($storage);
+    $subscriber->addHubUrl('http://hubbub.example.com');
+    $subscriber->setTopicUrl('http://www.example.net/rss.xml');
+    $subscriber->setCallbackUrl('http://www.mydomain.com/hubbub/callback');
+    $subscriber->subscribeAll();
+    ]]></programlisting>
+
+            <para>
+                Um Abos zu speichern und Zugriff auf dessen Daten für eine generelle Verwendung zu
+                Speichern benötigt die Komponente eine Datenbank (ein Schema wird später in diesem
+                Abschnitt angeboten). Standardmäßig wird angenommen das der Name der Tabelle
+                "subscription" ist und im Hintergrund <classname>Zend_Db_Table_Abstract</classname>
+                anwendet, was bedeutet das der Standardadapter verwendet wird welcher in der
+                Anwendung gesetzt ist. Man kann auch eine eigene spezielle Instanz von
+                <classname>Zend_Db_Table_Abstract</classname> in das assoziierte Modell von
+                <classname>Zend_Feed_Pubsubhubbub_Model_Subscription</classname> übergeben. Dieser
+                eigene Adapter kann so einfach wie gewünscht sein indem der Name der Tabelle welche
+                zu verwenden ist geändert wird, oder so komplex wie es notwendig ist.
+            </para>
+
+            <para>
+                Wärend das Modell als standardmäßige bereits verwendbare Lösung angeboten wird, kann
+                man sein eigenes Modell verwenden indem irgendein anderes Backend oder
+                Datenbanklayer (z.B. Doctrine) verwendet wird, solange die resultierende Klasse das
+                Interface <classname>Zend_Feed_Pubsubhubbub_Model_SubscriptionInterface</classname>
+                implementiert.
+            </para>
+
+            <para>
+                Ein Beispielschema (MySQL) für eine Abotabelle auf welche vom angebotenen Modell aus
+                zugegriffen werden kann, könnte wie folgt aussehen:
+            </para>
+
+            <programlisting language="sql"><![CDATA[
+CREATE TABLE IF NOT EXISTS `subscription` (
+  `id` varchar(32) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
+  `topic_url` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `hub_url` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `created_time` datetime DEFAULT NULL,
+  `lease_seconds` bigint(20) DEFAULT NULL,
+  `verify_token` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `secret` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `expiration_time` datetime DEFAULT NULL,
+  `subscription_state` varchar(12) COLLATE utf8_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+]]></programlisting>
+
+            <para>
+                Im Hintergrund sendet der Abonnent eine Anfrage an den Endpunkt des Hubs welche die
+                folgenden Parameter enthält (basierend auf dem vorhergehenden Beispiel):
+            </para>
+
+            <table id="zend.feed.pubsubhubbub.zend.feed.pubsubhubbub.subscriber.subscribing.and.unsubscribing.table">
+                <title>Anfrageparameter beim Abonnieren</title>
+
+                <tgroup cols="3">
+                    <thead>
+                        <row>
+                            <entry>Parameter</entry>
+
+                            <entry>Wert</entry>
+
+                            <entry>Beschreibung</entry>
+                        </row>
+                    </thead>
+
+                    <tbody>
+                        <row>
+                            <entry>hub.callback</entry>
+
+                            <entry>http://www.mydomain.com/hubbub/callback?xhub.subscription=5536df06b5dcb966edab3a4c4d56213c16a8184</entry>
+
+                            <entry>
+                                <para>
+                                    The URI used by a Hub to contact the Subscriber and either request
+                                    confirmation of a (un)subscription request or send updates from
+                                    subscribed feeds. The appended query string contains a custom
+                                    parameter (hence the xhub designation). It is a query string
+                                    parameter preserved by the Hub and resent with all Subscriber
+                                    requests. Its purpose is to allow the Subscriber to identify and
+                                    look up the subscription associated with any Hub request in a
+                                    backend storage medium.  This is a non-standard parameter used by
+                                    this component in preference to encoding a subscription key in the
+                                    URI path which is more difficult to implement in a Zend Framework
+                                    application.
+                                </para>
+
+                                <para>
+                                    Nevertheless, since not all Hubs support query string parameters,
+                                    we still strongly recommend adding the subscription key as a path component
+                                    in the form http://www.mydomain.com/hubbub/callback/5536df06b5dcb966edab3a4c4d56213c16a8184.
+                                    To accomplish this, it requires defining a route capable of parsing out the final
+                                    value of the key and then retrieving the value and passing it to the Subscriber
+                                    Callback object. The value would be passed into the method
+                                    <methodname>Zend_Pubsubhubbub_Subscriber_Callback::setSubscriptionKey()</methodname>.
+                                    A detailed example is offered later.
+                                </para>
+                            </entry>
+                        </row>
+
+                        <row>
+                            <entry>hub.lease_seconds</entry>
+
+                            <entry>2592000</entry>
+
+                            <entry>
+                                <para>
+                                    The number of seconds for which the Subscriber would like a new
+                                    subscription to remain valid for (i.e. a TTL). Hubs may enforce their own maximum
+                                    subscription period. All subscriptions should be renewed by simply
+                                    re-subscribing before the subscription period ends to ensure
+                                    continuity of updates. Hubs should additionally attempt to automatically
+                                    refresh subscriptions before they expire by contacting Subscribers (handled
+                                    automatically by the Callback class).
+                                </para>
+                            </entry>
+                        </row>
+
+                        <row>
+                            <entry>hub.mode</entry>
+
+                            <entry>subscribe</entry>
+
+                            <entry>
+                                <para>
+                                    Simple value indicating this is a subscription request.
+                                    Unsubscription requests would use the "unsubscribe" value.
+                                </para>
+                            </entry>
+                        </row>
+
+                        <row>
+                            <entry>hub.topic</entry>
+
+                            <entry>http://www.example.net/rss.xml</entry>
+
+                            <entry>
+                                <para>
+                                    The URI of the topic (i.e. Atom or RSS feed) which the Subscriber
+                                    wishes to subscribe to for updates.
+                                </para>
+                            </entry>
+                        </row>
+
+                        <row>
+                            <entry>hub.verify</entry>
+
+                            <entry>sync</entry>
+
+                            <entry>
+                                <para>
+                                    Indicates to the Hub the preferred mode of verifying subscriptions
+                                    or unsubscriptions. It is repeated twice in order of preference. Technically
+                                    this component does not distinguish between the two modes and treats both
+                                    equally.
+                                </para>
+                            </entry>
+                        </row>
+
+                        <row>
+                            <entry>hub.verify</entry>
+
+                            <entry>async</entry>
+
+                            <entry>
+                                <para>
+                                    Indicates to the Hub the preferred mode of verifying subscriptions
+                                    or unsubscriptions. It is repeated twice in order of preference. Technically
+                                    this component does not distinguish between the two modes and treats both
+                                    equally.
+                                </para>
+                            </entry>
+                        </row>
+
+                        <row>
+                            <entry>hub.verify_token</entry>
+
+                            <entry>3065919804abcaa7212ae89.879827871253878386</entry>
+
+                            <entry>
+                                <para>
+                                    A verification token returned to the Subscriber by the Hub when it
+                                    is confirming a subscription or unsubscription. Offers a measure of
+                                    reliance that the confirmation request originates from the correct
+                                    Hub to prevent misuse.
+                                </para>
+                            </entry>
+                        </row>
+                    </tbody>
+                </tgroup>
+            </table>
+
+            <para>
+                You can modify several of these parameters to indicate a different preference.  For
+                example, you can set a different lease seconds value using
+                <methodname>Zend_Pubsubhubbub_Subscriber::setLeaseSeconds()</methodname> or show a
+                preference for the async verify mode by using <code>
+                    setPreferredVerificationMode(Zend_Feed_Pubsubhubbub::VERIFICATION_MODE_ASYNC)</code>.
+                However the Hubs retain the capability to enforce their own preferences and for this
+                reason the component is deliberately designed to work across almost any set of options
+                with minimum end-user configuration required. Conventions are great when they work!
+            </para>
+
+            <note>
+                <para>
+                    While Hubs may require the use of a specific verification mode (both are supported
+                    by <classname>Zend_Pubsubhubbub</classname>), you may indicate a specific preference
+                    using the <methodname>setPreferredVerificationMode()</methodname> method. In "sync"
+                    (synchronous) mode, the Hub attempts to confirm a subscription as soon as it is
+                    received, and before responding to the subscription request. In "async"
+                    (asynchronous) mode, the Hub will return a response to the subscription request
+                    immediately, and its verification request may occur at a later time. Since
+                    <classname>Zend_Pubsubhubbub</classname> implements the Subscriber verification role
+                    as a separate callback class and requires the use of a backend storage medium, it
+                    actually supports both transparently though in terms of end-user performance,
+                    asynchronous verification is very much preferred to eliminate the impact of a
+                    poorly performing Hub tying up end-user server resources and connections for
+                    too long.
+                </para>
+            </note>
+
+            <para>
+                Unsubscribing from a Topic follows the exact same pattern as the previous example, with
+                the exception that we should call <methodname>unsubscribeAll()</methodname> instead. The
+                parameters included are identical to a subscription request with the exception that
+                "hub.mode" is set to "unsubscribe".
+            </para>
+
+            <para>
+                By default, a new instance of <classname>Zend_Pubsubhubbub_Subscriber</classname> will
+                attempt to use a database backed storage medium which defaults to using the default
+                <classname>Zend_Db</classname> adapter with a table name of "subscription".
+                It is recommended to set a custom storage solution where these defaults are not apt either
+                by passing in a new Model supporting the required interface or by passing a new instance
+                of <classname>Zend_Db_Table_Abstract</classname> to the default Model's constructor to change
+                the used table name.
+            </para>
+        </sect3>
+
+        <sect3 id="zend.feed.pubsubhubbub.zend.feed.pubsubhubbub.subscriber.handling.hub.callbacks">
+            <title>Handling Subscriber Callbacks</title>
+
+            <para>
+                Whenever a subscription or unsubscription request is made, the Hub must verify the
+                request by forwarding a new verification request to the Callback URL set in the
+                subscription/unsubscription parameters. To handle these Hub requests, which will include
+                all future communications containing Topic (feed) updates, the Callback URL should trigger the
+                execution of an instance of <classname>Zend_Pubsubhubbub_Subscriber_Callback</classname>
+                to handle the request.
+            </para>
+
+            <para>
+                The Callback class should be configured to use the same storage medium as the Subscriber
+                class. Using it is quite simple since most of its work is performed internally.
+            </para>
+
+            <programlisting language="php"><![CDATA[
+    $storage = new Zend_Feed_Pubsubhubbub_Model_Subscription;
+    $callback = new Zend_Feed_Pubsubhubbub_Subscriber_Callback;
+    $callback->setStorage($storage);
+    $callback->handle();
+    $callback->sendResponse();
+
+    /**
+     * Check if the callback resulting in the receipt of a feed update.
+     * Otherwise it was either a (un)sub verification request or invalid request.
+     * Typically we need do nothing other than add feed update handling - the rest
+     * is handled internally by the class.
+     */
+    if ($callback->hasFeedUpdate()) {
+        $feedString = $callback->getFeedUpdate();
+        /**
+         *  Process the feed update asynchronously to avoid a Hub timeout.
+         */
+    }
+    ]]></programlisting>
+
+            <note>
+                <para>
+                    It should be noted that
+                    <classname>Zend_Feed_Pubsubhubbub_Subscriber_Callback</classname> may independently
+                    parse any incoming query string and other parameters.  This is necessary since PHP
+                    alters the structure and keys of a query string when it is parsed into the
+                    <varname>$_GET</varname> or <varname>$_POST</varname> superglobals.  For example,
+                    all duplicate keys are ignored and periods are converted to underscores.
+                    Pubsubhubbub features both of these in the query strings it generates.
+                </para>
+            </note>
+
+            <important>
+                <para>
+                    It is essential that developers recognise that Hubs are only concerned with sending
+                    requests and receiving a response which verifies its receipt. If a feed update is
+                    received, it should never be processed on the spot since this leaves the Hub waiting
+                    for a response. Rather, any processing should be offloaded to another process or
+                    deferred until after a response has been returned to the Hub. One symptom of a
+                    failure to promptly complete Hub requests is that a Hub may continue to attempt
+                    delivery of the update/verification request leading to duplicated update attempts
+                    being processed by the Subscriber. This appears problematic - but in reality a
+                    Hub may apply a timeout of just a few seconds, and if no response is received within
+                    that time it may disconnect (assuming a delivery failure) and retry later. Note that
+                    Hubs are expected to distribute vast volumes of updates so their resources are
+                    stretched - please do process feeds asynchronously (e.g. in a separate process or
+                    a job queue or even a cron scheduled task) as much as possible.
+                </para>
+            </important>
+        </sect3>
+
+        <sect3 id="zend.feed.pubsubhubbub.zend.feed.pubsubhubbub.subscriber.setting.up.and.using.a.callback.url.route">
+            <title>Setting Up And Using A Callback URL Route</title>
+
+            <para>
+                As noted earlier, the <classname>Zend_Feed_Pubsubhubbub_Subscriber_Callback</classname>
+                class receives the combined key associated with any subscription from the Hub via one
+                of two methods. The technically preferred method is to add this key to the Callback
+                URL employed by the Hub in all future requests using a query string parameter with
+                the key "xhub.subscription". However, for historical reasons, primarily that this was
+                not supported in Pubsubhubbub 0.1 (it was recently added in 0.2 only), it is strongly
+                recommended to use the most compatible means of adding this key to the Callback URL
+                by appending it to the URL's path.
+            </para>
+
+            <para>Thus the URL http://www.example.com/callback?xhub.subscription=key would become
+            http://www.example.com/callback/key.</para>
+
+            <para>Since the query string method is the default in anticipation of a greater level
+            of future support for the full 0.2 specification, this requires some additional work
+            to implement.</para>
+
+            <para>The first step to to make the <classname>Zend_Feed_Pubsubhubbub_Subscriber_Callback</classname>
+            class aware of the path contained subscription key. It's manually injected therefore
+            since it also requires manually defining a route for this purpose. This is achieved simply by
+            called the method <methodname>Zend_Feed_Pubsubhubbub_Subscriber_Callback::setSubscriptionKey()</methodname>
+            with the parameter being the key value available from the Router. The example below
+            demonstrates this using a Zend Framework controller.</para>
+
+            <programlisting language="php"><![CDATA[
+class CallbackController extends Zend_Controller_Action
+{
+
+    public function indexAction()
+    {
+        $storage = new Zend_Feed_Pubsubhubbub_Model_Subscription;
+        $callback = new Zend_Feed_Pubsubhubbub_Subscriber_Callback;
+        $callback->setStorage($storage);
+        /**
+         * Inject subscription key parsing from URL path using
+         * a parameter from Router.
+         */
+        $subscriptionKey = $this->_getParam('subkey');
+        $callback->setSubscriptionKey($subscriptionKey);
+        $callback->handle();
+        $callback->sendResponse();
+
+        /**
+         * Check if the callback resulting in the receipt of a feed update.
+         * Otherwise it was either a (un)sub verification request or invalid request.
+         * Typically we need do nothing other than add feed update handling - the rest
+         * is handled internally by the class.
+         */
+        if ($callback->hasFeedUpdate()) {
+            $feedString = $callback->getFeedUpdate();
+            /**
+             *  Process the feed update asynchronously to avoid a Hub timeout.
+             */
+        }
+    }
+
+}
+    ]]></programlisting>
+
+        <para>Actually adding the route which would map the path-appended key
+        to a parameter for retrieval from a controller can be accomplished using
+        a Route configuration such as the INI formatted example below for use
+        with <classname>Zend_Application</classname> bootstrapping.</para>
+
+        <programlisting language="dosini"><![CDATA[
+; Callback Route to enable appending a PuSH Subscription's lookup key
+resources.router.routes.callback.route = "callback/:subkey"
+resources.router.routes.callback.defaults.module = "default"
+resources.router.routes.callback.defaults.controller = "callback"
+resources.router.routes.callback.defaults.action = "index"
+]]></programlisting>
+
+        </sect3>
+    </sect2>
+</sect1>
